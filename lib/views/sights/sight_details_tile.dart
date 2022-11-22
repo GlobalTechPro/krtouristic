@@ -1,0 +1,397 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:krtouristic/conf/responsive_app_config.dart';
+import 'package:krtouristic/model/core/location.dart';
+import 'package:krtouristic/model/core/schedule.dart';
+import 'package:krtouristic/providers/google_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:krtouristic/conf/font_styles.dart' as font_styles;
+import 'package:galleryimage/galleryimage.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:readmore/readmore.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
+const double paddingPercentage = 1;
+
+class SightDetailsTile extends StatelessWidget {
+  final Location sight;
+  const SightDetailsTile({Key? key, required this.sight}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final responsiveAppConfig = ResponsiveAppConfig(context);
+    List<Widget> scheduleRows = [];
+    List<Schedule> schedule = sight.schedule ?? [];
+    var googleServiceProvider = GoogleProvider();
+    final CameraPosition initialPosition = CameraPosition(
+      target: LatLng(sight.lat, sight.lng),
+      zoom: 13.0,
+    );
+    Map<MarkerId, Marker> mapMarkers = {};
+    final markerId = MarkerId('${sight.lat.toString()}${sight.lng.toString()}');
+    mapMarkers[markerId] = Marker(
+      markerId: markerId,
+      position: LatLng(sight.lat, sight.lng),
+      infoWindow: InfoWindow(
+        title: sight.title,
+      ),
+    );
+
+    for (Schedule scheduleItem in schedule) {
+      scheduleRows.add(Row(
+        children: [
+          SizedBox(
+            width: responsiveAppConfig.rWidthPadding(35),
+            child: Text(
+              "${scheduleItem.weekDay}:",
+              style: font_styles.sightDetailsInfoRow,
+            ),
+          ),
+          SizedBox(
+            width: responsiveAppConfig.rWidthPadding(30),
+            child: Text(
+              "${scheduleItem.fromHour.toString().padLeft(2, '0')}:${scheduleItem.fromMinute.toString().padLeft(2, '0')}"
+              " - "
+              "${scheduleItem.toHour.toString().padLeft(2, '0')}:${scheduleItem.toMinute.toString().padLeft(2, '0')}",
+              style: font_styles.sightDetailsInfoRow,
+            ),
+          ),
+        ],
+      ));
+    }
+
+    Widget videoSection = Container();
+    if (sight.youtubeUrl != null && sight.youtubeUrl != '') {
+      final String videoId =
+          YoutubePlayer.convertUrlToId(sight.youtubeUrl!) ?? '';
+      YoutubePlayerController videoController = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(
+          autoPlay: false,
+        ),
+      );
+
+      videoSection = YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: videoController,
+          bottomActions: [
+            const SizedBox(width: 8.0),
+            CurrentPosition(),
+            const SizedBox(width: 8.0),
+            ProgressBar(isExpanded: true),
+            const SizedBox(width: 8.0),
+            RemainingDuration(),
+            const SizedBox(width: 8.0),
+          ],
+        ),
+        builder: (context, player) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            margin: const EdgeInsets.only(top: 15.0),
+            child: player,
+          );
+        },
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+          bottom: responsiveAppConfig.rHeight(paddingPercentage)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Column(
+          children: [
+            CachedNetworkImage(
+              imageUrl: sight.headImage.url,
+              imageBuilder: (context, imageProvider) {
+                return Container(
+                  height: 200.0,
+                  width: responsiveAppConfig.rWidthPadding(100),
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(5.0)),
+                    color: Colors.grey.withOpacity(0.4),
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 15,
+                        bottom: 15,
+                        right: 15,
+                        child: Container(
+                          padding: const EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(7.0)),
+                          ),
+                          constraints: const BoxConstraints(
+                            minHeight: 40.0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                sight.title,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                style: font_styles.sightDetailsTitle,
+                              ),
+                              const SizedBox(height: 5.0),
+                              Text(
+                                sight.subtitle ?? '',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: font_styles.sightDetailsSubtitle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              progressIndicatorBuilder: (context, url, downloadProgress) =>
+                  CircularProgressIndicator(
+                value: downloadProgress.progress,
+                color: Colors.blueAccent,
+                backgroundColor: Colors.yellowAccent,
+              ),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            ),
+
+            // -----------------------------------------------------------
+            // info section
+            Column(
+              children: [
+                InkWell(
+                  child: Row(
+                    children: [
+                      if (sight.address != null) ...[
+                        Column(children: [
+                          const Divider(
+                            height: 20.0,
+                            indent: 17.0,
+                            endIndent: 17.0,
+                          ),
+                          Row(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                child: Icon(
+                                  Icons.location_pin,
+                                  color: Colors.white,
+                                  size: 20.0,
+                                ),
+                              ),
+                              Text(
+                                sight.address!,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: font_styles.sightDetailsInfoRow,
+                              ),
+                            ],
+                          ),
+                        ]),
+                      ],
+                    ],
+                  ),
+                  onTap: () {
+                    GoogleProvider.openMap(sight.lat, sight.lng);
+                  },
+                ),
+                if (sight.phone != null && sight.phone != '') ...[
+                  const SizedBox(
+                    height: 5.0,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: InkWell(
+                      child: Row(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.0),
+                            child: Icon(
+                              Icons.phone_sharp,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                          ),
+                          Text(
+                            sight.phone ?? '',
+                            style: font_styles.sightDetailsInfoRow,
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        final call = Uri.parse("tel:${sight.phone}");
+                        launchUrl(call);
+                      },
+                    ),
+                  ),
+                ],
+                if (sight.email != null && sight.email != '') ...[
+                  const SizedBox(
+                    height: 5.0,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: InkWell(
+                      child: Row(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.0),
+                            child: Icon(
+                              Icons.email_sharp,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                          ),
+                          Text(
+                            sight.email!,
+                            style: font_styles.sightDetailsInfoRow,
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        final email = Uri.parse("mailto:${sight.email}");
+                        launchUrl(email);
+                      },
+                    ),
+                  ),
+                ],
+                if (sight.schedule != null) ...[
+                  const SizedBox(
+                    height: 5.0,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Icon(
+                            Icons.watch_later_sharp,
+                            color: Colors.white,
+                            size: 20.0,
+                          ),
+                        ),
+                        Column(
+                          children: scheduleRows,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            // -----------------------------------------------------------
+
+            // description section
+            if (sight.description != null && sight.description != '') ...[
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Column(
+                    children: [
+                      const Divider(
+                        height: 20.0,
+                        indent: 17.0,
+                        endIndent: 17.0,
+                      ),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Опис',
+                          style: font_styles.screenSectionTitle,
+                        ),
+                      ),
+                      ReadMoreText(
+                        sight.description ?? '',
+                        trimLines: 3,
+                        colorClickableText:
+                            const Color.fromRGBO(255, 213, 0, 1.0),
+                        trimMode: TrimMode.Line,
+                        trimCollapsedText: 'Читати далі',
+                        trimExpandedText: 'Приховати',
+                        textAlign: TextAlign.justify,
+                        style: font_styles.locationDescription,
+                      ),
+                    ],
+                  )),
+            ],
+            // -----------------------------------------------------------
+
+            // -----------------------------------------------------------
+            // map section
+            const Divider(
+              height: 20.0,
+              indent: 17.0,
+              endIndent: 17.0,
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: SizedBox(
+                height: 200,
+                child: GoogleMap(
+                  mapType: MapType.normal,
+                  minMaxZoomPreference: googleServiceProvider.zoomPref,
+                  onMapCreated: googleServiceProvider.onMapCreated,
+                  initialCameraPosition: initialPosition,
+                  zoomGesturesEnabled: false,
+                  zoomControlsEnabled: true,
+                  tiltGesturesEnabled: false,
+                  scrollGesturesEnabled: false,
+                  compassEnabled: false,
+                  myLocationEnabled: false,
+                  myLocationButtonEnabled: false,
+                  markers: Set<Marker>.of(mapMarkers.values),
+                ),
+              ),
+            ),
+            // end of map section
+            // -----------------------------------------------------------
+
+            // gallery section
+            if (sight.galleryImages != null) ...[
+              const Divider(
+                height: 20.0,
+                indent: 17.0,
+                endIndent: 17.0,
+              ),
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: Column(
+                    children: [
+                      Row(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text(
+                            'Галерея',
+                            style: font_styles.screenSectionTitle,
+                          ),
+                        ),
+                      ]),
+
+                      // YouTube video section
+                      videoSection,
+
+                      GalleryImage(
+                        numOfShowImages:
+                            sight.galleryImages!.length > 5 ? 6 : 3,
+                        titleGallery: sight.title,
+                        imageUrls: sight.galleryImages ?? [],
+                      ),
+                    ],
+                  ))
+            ],
+          ],
+        ),
+      ]),
+    );
+  }
+}

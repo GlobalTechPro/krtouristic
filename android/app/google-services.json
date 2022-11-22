@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "561371875616",
+    "project_id": "ets-com",
+    "storage_bucket": "ets-com.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561371875616:android:ea394b81d5838d4d1d2f45",
+        "android_client_info": {
+          "package_name": "com.ets.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "561371875616-irrnlc9oo31uv92vjgfuuumu79k2i036.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkyVPgg3RHMDvb4HAZK22K5DGnzsfQAr4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "561371875616-irrnlc9oo31uv92vjgfuuumu79k2i036.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "561371875616-4f0o2g1n7o9ah73q6md7aph5u44v2082.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ets.ios"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
