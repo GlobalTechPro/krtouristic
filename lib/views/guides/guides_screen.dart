@@ -182,7 +182,7 @@ class _GuidesScreenState extends State<GuidesScreen> with AfterLayoutMixin {
                       ),
                       Text(
                         guide.phone,
-                        style: font_styles.guidePhone,
+                        style: font_styles.guideData,
                       ),
                     ],
                   ),
@@ -200,9 +200,15 @@ class _GuidesScreenState extends State<GuidesScreen> with AfterLayoutMixin {
                       children: [
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 3.0),
-                          child: Icon(Icons.email_sharp),
+                          child: Icon(
+                            Icons.email_sharp,
+                            color: Colors.white,
+                          ),
                         ),
-                        Text(guide.email!),
+                        Text(
+                          guide.email!,
+                          style: font_styles.guideData,
+                        ),
                       ],
                     ),
                     onTap: () {

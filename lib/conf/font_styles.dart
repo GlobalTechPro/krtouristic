@@ -107,7 +107,7 @@ final TextStyle guideDescription = GoogleFonts.alice(
   height: 1.6,
 );
 
-final TextStyle guidePhone = GoogleFonts.alice(
+final TextStyle guideData = GoogleFonts.alice(
   color: Colors.white,
   fontWeight: FontWeight.w500,
   fontSize: 17.0,
