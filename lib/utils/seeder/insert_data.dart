@@ -2,7 +2,7 @@ import 'package:krtouristic/utils/injection/injection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
-void _insertData() async {
+void insertData() async {
   // getIt<FirebaseFirestore>().useFirestoreEmulator('localhost', 8080);
 
   final batch = getIt<FirebaseFirestore>().batch();
@@ -628,28 +628,33 @@ void _insertData() async {
 
   final guidedTourType1 = <String, dynamic>{
     "lang": "uk",
-    "title": "Пішохідні",
-    "name": "walk_tour",
+    "title": "Оглядові",
+    "name": "observe_tour",
   };
   final guidedTourType2 = <String, dynamic>{
     "lang": "uk",
-    "title": "Транспортні",
-    "name": "transport_tour",
+    "title": "Екологічні",
+    "name": "eco_tour",
   };
   final guidedTourType3 = <String, dynamic>{
     "lang": "uk",
-    "title": "Велосипедні",
-    "name": "bike_tour",
+    "title": "Індустріальні",
+    "name": "industrial_tour",
   };
   final guidedTourType4 = <String, dynamic>{
     "lang": "uk",
-    "title": "Водні",
-    "name": "water_tour",
+    "title": "Історичні",
+    "name": "historical_tour",
   };
   final guidedTourType5 = <String, dynamic>{
     "lang": "uk",
-    "title": "Експертні",
-    "name": "expert_tour",
+    "title": "Природничі",
+    "name": "nature_tour",
+  };
+  final guidedTourType6 = <String, dynamic>{
+    "lang": "uk",
+    "title": "Екстремальні",
+    "name": "extreme_tour",
   };
   batch.set(getIt<FirebaseFirestore>().collection("GuidedTourType").doc(),
       guidedTourType1);
@@ -661,6 +666,8 @@ void _insertData() async {
       guidedTourType4);
   batch.set(getIt<FirebaseFirestore>().collection("GuidedTourType").doc(),
       guidedTourType5);
+  batch.set(getIt<FirebaseFirestore>().collection("GuidedTourType").doc(),
+      guidedTourType6);
 
   final location1 = <String, dynamic>{
     "city_id": 1,
