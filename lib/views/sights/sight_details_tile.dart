@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:krtouristic/conf/font_styles.dart' as font_styles;
 import 'package:galleryimage/galleryimage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:krtouristic/views/common/youtube_player_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:readmore/readmore.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 const double paddingPercentage = 1;
 
@@ -163,39 +163,7 @@ class _SightDetailsTileState extends State<SightDetailsTile> {
       ));
     }
 
-    Widget videoSection = Container();
-    if (widget.sight.youtubeUrl != null && widget.sight.youtubeUrl != '') {
-      final String videoId =
-          YoutubePlayer.convertUrlToId(widget.sight.youtubeUrl!) ?? '';
-      YoutubePlayerController videoController = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: false,
-        ),
-      );
-
-      videoSection = YoutubePlayerBuilder(
-        player: YoutubePlayer(
-          controller: videoController,
-          bottomActions: [
-            const SizedBox(width: 8.0),
-            CurrentPosition(),
-            const SizedBox(width: 8.0),
-            ProgressBar(isExpanded: true),
-            const SizedBox(width: 8.0),
-            RemainingDuration(),
-            const SizedBox(width: 8.0),
-          ],
-        ),
-        builder: (context, player) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            margin: const EdgeInsets.only(top: 15.0),
-            child: player,
-          );
-        },
-      );
-    }
+    Widget videoSection = YoutubePlayerWidget(youtubeUrl: widget.sight.youtubeUrl);
 
     return Padding(
       padding: EdgeInsets.only(

@@ -4,10 +4,10 @@ import 'package:krtouristic/model/core/guide.dart';
 import 'package:krtouristic/model/helpers/guide_helper.dart';
 import 'package:krtouristic/views/common/app_bar_main.dart';
 import 'package:krtouristic/conf/globals.dart' as globals;
+import 'package:krtouristic/views/common/youtube_player_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:krtouristic/conf/font_styles.dart' as font_styles;
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class GuidesScreen extends StatefulWidget {
   const GuidesScreen({Key? key, required this.title}) : super(key: key);
@@ -46,39 +46,7 @@ class _GuidesScreenState extends State<GuidesScreen> with AfterLayoutMixin {
 
   Widget _buildGuideTile(Guide guide) {
     final GlobalKey expansionTileKey = GlobalKey();
-    Widget videoSection = Container();
-    if (guide.youtubeUrl != null && guide.youtubeUrl != '') {
-      final String videoId =
-          YoutubePlayer.convertUrlToId(guide.youtubeUrl!) ?? '';
-      YoutubePlayerController videoController = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: false,
-        ),
-      );
-
-      videoSection = YoutubePlayerBuilder(
-        player: YoutubePlayer(
-          controller: videoController,
-          bottomActions: [
-            const SizedBox(width: 8.0),
-            CurrentPosition(),
-            const SizedBox(width: 8.0),
-            ProgressBar(isExpanded: true),
-            const SizedBox(width: 8.0),
-            RemainingDuration(),
-            const SizedBox(width: 8.0),
-          ],
-        ),
-        builder: (context, player) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            margin: const EdgeInsets.only(top: 15.0),
-            child: player,
-          );
-        },
-      );
-    }
+    Widget videoSection = YoutubePlayerWidget(youtubeUrl: guide.youtubeUrl);
 
     return Card(
       child: ExpansionTile(
