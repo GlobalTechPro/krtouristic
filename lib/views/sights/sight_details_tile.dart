@@ -13,29 +13,132 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 const double paddingPercentage = 1;
 
-class SightDetailsTile extends StatelessWidget {
+class SightDetailsTile extends StatefulWidget {
   final Location sight;
   const SightDetailsTile({Key? key, required this.sight}) : super(key: key);
+
+  @override
+  State<SightDetailsTile> createState() => _SightDetailsTileState();
+}
+
+class _SightDetailsTileState extends State<SightDetailsTile> {
+  MapType dialogMapType = MapType.normal;
+  String mapTypeValue = 'normal';
 
   @override
   Widget build(BuildContext context) {
     final responsiveAppConfig = ResponsiveAppConfig(context);
     List<Widget> scheduleRows = [];
-    List<Schedule> schedule = sight.schedule ?? [];
+    List<Schedule> schedule = widget.sight.schedule ?? [];
     var googleServiceProvider = GoogleProvider();
     final CameraPosition initialPosition = CameraPosition(
-      target: LatLng(sight.lat, sight.lng),
+      target: LatLng(widget.sight.lat, widget.sight.lng),
       zoom: 13.0,
     );
     Map<MarkerId, Marker> mapMarkers = {};
-    final markerId = MarkerId('${sight.lat.toString()}${sight.lng.toString()}');
+    final markerId = MarkerId('${widget.sight.lat.toString()}${widget.sight.lng.toString()}');
     mapMarkers[markerId] = Marker(
       markerId: markerId,
-      position: LatLng(sight.lat, sight.lng),
+      position: LatLng(widget.sight.lat, widget.sight.lng),
       infoWindow: InfoWindow(
-        title: sight.title,
+        title: widget.sight.title,
       ),
     );
+
+    Future<void> openMapDialog(BuildContext context) async {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return StatefulBuilder(builder: (context, setState) {
+              return SimpleDialog(
+                backgroundColor: const Color.fromRGBO(2, 51, 103, 1.0),
+                contentPadding: const EdgeInsets.all(3.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                children: [
+                  Stack(children: [
+                    SizedBox(
+                      height: responsiveAppConfig.rHeight(50),
+                      width: responsiveAppConfig.rWidth(80),
+                      child: GoogleMap(
+                        mapType: dialogMapType,
+                        minMaxZoomPreference: googleServiceProvider.zoomPref,
+                        onMapCreated: googleServiceProvider.onMapCreated,
+                        initialCameraPosition: initialPosition,
+                        zoomGesturesEnabled: true,
+                        zoomControlsEnabled: true,
+                        tiltGesturesEnabled: true,
+                        scrollGesturesEnabled: true,
+                        compassEnabled: true,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: true,
+                        markers: Set<Marker>.of(mapMarkers.values),
+                      ),
+                    ),
+                    Positioned(
+                      left: 15.0,
+                      top: 5.0,
+                      child: DropdownButton(
+                        style: const TextStyle(
+                          color: Color.fromRGBO(255, 213, 0, 1.0),
+                        ),
+                        dropdownColor: const Color.fromRGBO(2, 51, 103, 1.0),
+                        value: mapTypeValue,
+                        underline: Container(
+                          height: 2,
+                          color: const Color.fromRGBO(255, 213, 0, 1.0),
+                        ),
+                        icon: const Icon(
+                          Icons.map_outlined,
+                          color: Color.fromRGBO(255, 213, 0, 1.0),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: "normal",
+                            child: Text(
+                              "Звичайна",
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: "satellite",
+                            child: Text(
+                              "Супутник",
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: "terrain",
+                            child: Text(
+                              "Ландшафт",
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            switch (value) {
+                              case 'normal':
+                                dialogMapType = MapType.normal;
+                                mapTypeValue = value.toString();
+                                break;
+                              case 'satellite':
+                                dialogMapType = MapType.satellite;
+                                mapTypeValue = value.toString();
+                                break;
+                              case 'terrain':
+                                dialogMapType = MapType.terrain;
+                                mapTypeValue = value.toString();
+                                break;
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ]),
+                ],
+              );
+            });
+          });
+    }
 
     for (Schedule scheduleItem in schedule) {
       scheduleRows.add(Row(
@@ -61,9 +164,9 @@ class SightDetailsTile extends StatelessWidget {
     }
 
     Widget videoSection = Container();
-    if (sight.youtubeUrl != null && sight.youtubeUrl != '') {
+    if (widget.sight.youtubeUrl != null && widget.sight.youtubeUrl != '') {
       final String videoId =
-          YoutubePlayer.convertUrlToId(sight.youtubeUrl!) ?? '';
+          YoutubePlayer.convertUrlToId(widget.sight.youtubeUrl!) ?? '';
       YoutubePlayerController videoController = YoutubePlayerController(
         initialVideoId: videoId,
         flags: const YoutubePlayerFlags(
@@ -101,7 +204,7 @@ class SightDetailsTile extends StatelessWidget {
         Column(
           children: [
             CachedNetworkImage(
-              imageUrl: sight.headImage.url,
+              imageUrl: widget.sight.headImage.url,
               imageBuilder: (context, imageProvider) {
                 return Container(
                   height: 200.0,
@@ -134,14 +237,14 @@ class SightDetailsTile extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                sight.title,
+                                widget.sight.title,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,
                                 style: font_styles.sightDetailsTitle,
                               ),
                               const SizedBox(height: 5.0),
                               Text(
-                                sight.subtitle ?? '',
+                                widget.sight.subtitle ?? '',
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                                 style: font_styles.sightDetailsSubtitle,
@@ -170,7 +273,7 @@ class SightDetailsTile extends StatelessWidget {
                 InkWell(
                   child: Row(
                     children: [
-                      if (sight.address != null) ...[
+                      if (widget.sight.address != null) ...[
                         Column(children: [
                           const Divider(
                             height: 20.0,
@@ -188,7 +291,7 @@ class SightDetailsTile extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                sight.address!,
+                                widget.sight.address!,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                                 style: font_styles.sightDetailsInfoRow,
@@ -200,10 +303,10 @@ class SightDetailsTile extends StatelessWidget {
                     ],
                   ),
                   onTap: () {
-                    GoogleProvider.openMap(sight.lat, sight.lng);
+                    GoogleProvider.openMapApp(widget.sight.lat, widget.sight.lng);
                   },
                 ),
-                if (sight.phone != null && sight.phone != '') ...[
+                if (widget.sight.phone != null && widget.sight.phone != '') ...[
                   const SizedBox(
                     height: 5.0,
                   ),
@@ -221,19 +324,19 @@ class SightDetailsTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            sight.phone ?? '',
+                            widget.sight.phone ?? '',
                             style: font_styles.sightDetailsInfoRow,
                           ),
                         ],
                       ),
                       onTap: () {
-                        final call = Uri.parse("tel:${sight.phone}");
+                        final call = Uri.parse("tel:${widget.sight.phone}");
                         launchUrl(call);
                       },
                     ),
                   ),
                 ],
-                if (sight.email != null && sight.email != '') ...[
+                if (widget.sight.email != null && widget.sight.email != '') ...[
                   const SizedBox(
                     height: 5.0,
                   ),
@@ -251,19 +354,19 @@ class SightDetailsTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            sight.email!,
+                            widget.sight.email!,
                             style: font_styles.sightDetailsInfoRow,
                           ),
                         ],
                       ),
                       onTap: () {
-                        final email = Uri.parse("mailto:${sight.email}");
+                        final email = Uri.parse("mailto:${widget.sight.email}");
                         launchUrl(email);
                       },
                     ),
                   ),
                 ],
-                if (sight.schedule != null) ...[
+                if (widget.sight.schedule != null) ...[
                   const SizedBox(
                     height: 5.0,
                   ),
@@ -292,7 +395,7 @@ class SightDetailsTile extends StatelessWidget {
             // -----------------------------------------------------------
 
             // description section
-            if (sight.description != null && sight.description != '') ...[
+            if (widget.sight.description != null && widget.sight.description != '') ...[
               Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   child: Column(
@@ -310,7 +413,7 @@ class SightDetailsTile extends StatelessWidget {
                         ),
                       ),
                       ReadMoreText(
-                        sight.description ?? '',
+                        widget.sight.description ?? '',
                         trimLines: 3,
                         colorClickableText:
                             const Color.fromRGBO(255, 213, 0, 1.0),
@@ -350,6 +453,9 @@ class SightDetailsTile extends StatelessWidget {
                   myLocationEnabled: false,
                   myLocationButtonEnabled: false,
                   markers: Set<Marker>.of(mapMarkers.values),
+                  onTap: (latLng) {
+                    openMapDialog(context);
+                  },
                 ),
               ),
             ),
@@ -357,7 +463,7 @@ class SightDetailsTile extends StatelessWidget {
             // -----------------------------------------------------------
 
             // gallery section
-            if (sight.galleryImages != null) ...[
+            if (widget.sight.galleryImages != null) ...[
               const Divider(
                 height: 20.0,
                 indent: 17.0,
@@ -382,9 +488,9 @@ class SightDetailsTile extends StatelessWidget {
 
                       GalleryImage(
                         numOfShowImages:
-                            sight.galleryImages!.length > 5 ? 6 : 3,
-                        titleGallery: sight.title,
-                        imageUrls: sight.galleryImages ?? [],
+                          widget.sight.galleryImages!.length > 5 ? 6 : 3,
+                        titleGallery: widget.sight.title,
+                        imageUrls: widget.sight.galleryImages ?? [],
                       ),
                     ],
                   ))

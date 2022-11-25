@@ -51,7 +51,7 @@ class GoogleProvider {
     // }
   }
 
-  static Future<void> openMap(double latitude, double longitude) async {
+  static Future<void> openMapApp(double latitude, double longitude) async {
     final googleUrl = Uri.parse(
         'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
     if (await canLaunchUrl(googleUrl)) {
