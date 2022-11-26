@@ -10,6 +10,7 @@ import 'package:krtouristic/views/home/home_block_tile.dart';
 import 'package:krtouristic/views/common/error_tile.dart';
 import 'package:krtouristic/views/common/app_bar_main.dart';
 import 'package:krtouristic/conf/globals.dart' as globals;
+import 'package:krtouristic/views/sights/sight_details_screen.dart';
 import 'package:krtouristic/views/sights/sights_category_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:krtouristic/providers/google_provider.dart';
@@ -32,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
   String mapTypeValue = 'normal';
   var googleServiceProvider = GoogleProvider();
 
-  void addMarkers(locations) async {
+  void addMarkers(context, locations) async {
     googleServiceProvider.markers.clear();
     final BitmapDescriptor markerBitmap = await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(),
@@ -55,6 +56,15 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
         infoWindow: InfoWindow(
           title: location.title,
           snippet: location.address,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    SightDetailsScreen(sightId: location.firebaseId ?? ''),
+              ),
+            );
+          },
         ),
       );
       googleServiceProvider.markers[markerId] = marker;
@@ -74,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
 
     final sightGroupHelper = SightGroupHelper();
     final sightGroupResult = await sightGroupHelper.getSightGroups();
-    sightGroupResult.fold((l) {}, (r) {
+    sightGroupResult.fold((_) {}, (r) {
       _sightGroups = r;
     });
     setState(() {});
@@ -83,8 +93,8 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
     var locationsResult = await locationHelper.getLocations(
       sightGroup: 'featured',
     );
-    locationsResult.fold((l) {}, (r) {
-      addMarkers(r);
+    locationsResult.fold((l) {}, (locations) {
+      addMarkers(context, locations);
     });
   }
 
