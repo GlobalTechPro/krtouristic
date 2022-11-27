@@ -1,20 +1,17 @@
-import 'package:after_layout/after_layout.dart';
-import 'package:krtouristic/conf/responsive_app_config.dart';
-import 'package:krtouristic/model/core/location.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:krtouristic/model/helpers/location_helper.dart';
 import 'package:krtouristic/model/helpers/sight_group_helper.dart';
 import 'package:krtouristic/model/helpers/ui_blocks_helper.dart';
 import 'package:krtouristic/model/glitch/glitch.dart';
+import 'package:krtouristic/views/common/map/map_helper.dart';
+import 'package:krtouristic/views/common/map/map_widget.dart';
 import 'package:krtouristic/views/guided_tours/guided_tours_main_screen.dart';
 import 'package:krtouristic/views/home/home_block_tile.dart';
 import 'package:krtouristic/views/common/error_tile.dart';
 import 'package:krtouristic/views/common/app_bar_main.dart';
 import 'package:krtouristic/conf/globals.dart' as globals;
-import 'package:krtouristic/views/sights/sight_details_screen.dart';
 import 'package:krtouristic/views/sights/sights_category_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:krtouristic/providers/google_provider.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key, required this.title}) : super(key: key);
@@ -24,56 +21,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
+class _HomeScreenState extends State<HomeScreen> {
   int tabIndex = 0;
   late var _homeBlocks = [];
   late var _sightGroups = [];
   Glitch? _errorGlitch;
-  MapType dialogMapType = MapType.normal;
-  String mapTypeValue = 'normal';
-  var googleServiceProvider = GoogleProvider();
+  Widget mapWidget = Container();
 
-  void addMarkers(context, locations) async {
-    googleServiceProvider.markers.clear();
-    final BitmapDescriptor markerBitmap = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(),
-      'assets/icons/location-icon.png',
-    );
-    for (final Location location in locations) {
-      final markerId = location.firebaseId ?? location.title;
-      /*
-      // adding markers with the network images
-      Uint8List bytes = (await NetworkAssetBundle(Uri.parse(location.headImage.url))
-          .load(location.headImage.url))
-          .buffer
-          .asUint8List();
-       */
-      final marker = Marker(
-        markerId: MarkerId(markerId),
-        position: LatLng(location.lat, location.lng),
-        icon: markerBitmap,
-        // icon: BitmapDescriptor.fromBytes(bytes),
-        infoWindow: InfoWindow(
-          title: location.title,
-          snippet: location.address,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    SightDetailsScreen(sightId: location.firebaseId ?? ''),
-              ),
-            );
-          },
-        ),
-      );
-      googleServiceProvider.markers[markerId] = marker;
-    }
-    setState(() {});
-  }
-
-  @override
-  void afterFirstLayout(BuildContext context) async {
+  void loadStateData(context) async {
     final uiBlocksHelper = UiBlocksHelper();
     final uiBlocksResult = await uiBlocksHelper.getHomePageBlocks();
     uiBlocksResult.fold((l) {
@@ -87,116 +42,26 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
     sightGroupResult.fold((_) {}, (r) {
       _sightGroups = r;
     });
-    setState(() {});
 
     final locationHelper = LocationHelper();
     var locationsResult = await locationHelper.getLocations(
       sightGroup: 'featured',
     );
-    locationsResult.fold((l) {}, (locations) {
-      addMarkers(context, locations);
+    locationsResult.fold((_) {}, (locations) async {
+      Map<MarkerId, Marker> markers = await MapHelper.createLinkedMarkers(locations, context);
+      setState(() {
+        mapWidget = MapWidget(
+          height: 350,
+          markers: markers,
+        );
+      });
     });
+
   }
 
   @override
   Widget build(BuildContext context) {
-    final responsiveAppConfig = ResponsiveAppConfig(context);
-
-    Future<void> openMapDialog(BuildContext context) async {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return StatefulBuilder(builder: (context, setState) {
-              return SimpleDialog(
-                backgroundColor: const Color.fromRGBO(2, 51, 103, 1.0),
-                contentPadding: const EdgeInsets.all(3.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                children: [
-                  Stack(children: [
-                    SizedBox(
-                      height: responsiveAppConfig.rHeight(80),
-                      width: responsiveAppConfig.rWidth(80),
-                      child: GoogleMap(
-                        mapType: dialogMapType,
-                        minMaxZoomPreference: googleServiceProvider.zoomPref,
-                        onMapCreated: googleServiceProvider.onMapCreated,
-                        initialCameraPosition:
-                            googleServiceProvider.currentCityPosition,
-                        zoomGesturesEnabled: true,
-                        zoomControlsEnabled: true,
-                        tiltGesturesEnabled: true,
-                        scrollGesturesEnabled: true,
-                        compassEnabled: true,
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: true,
-                        markers: googleServiceProvider.markers.values.toSet(),
-                      ),
-                    ),
-                    Positioned(
-                      left: 15.0,
-                      top: 5.0,
-                      child: DropdownButton(
-                        style: const TextStyle(
-                          color: Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        dropdownColor: const Color.fromRGBO(2, 51, 103, 1.0),
-                        value: mapTypeValue,
-                        underline: Container(
-                          height: 2,
-                          color: const Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        icon: const Icon(
-                          Icons.map_outlined,
-                          color: Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: "normal",
-                            child: Text(
-                              "Звичайна",
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: "satellite",
-                            child: Text(
-                              "Супутник",
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: "terrain",
-                            child: Text(
-                              "Ландшафт",
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            switch (value) {
-                              case 'normal':
-                                dialogMapType = MapType.normal;
-                                mapTypeValue = value.toString();
-                                break;
-                              case 'satellite':
-                                dialogMapType = MapType.satellite;
-                                mapTypeValue = value.toString();
-                                break;
-                              case 'terrain':
-                                dialogMapType = MapType.terrain;
-                                mapTypeValue = value.toString();
-                                break;
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                  ]),
-                ],
-              );
-            });
-          });
-    }
+    loadStateData(context);
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(1, 25, 51, 1.0),
@@ -230,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => SightsCategoryScreen(
-                                    categoryId: sightGroup,
+                                    category: sightGroup,
                                   ),
                                 ),
                               );
@@ -242,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => SightsCategoryScreen(
-                                      categoryId: sightGroup),
+                                      category: sightGroup),
                                 ),
                               );
                               break;
@@ -253,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => SightsCategoryScreen(
-                                      categoryId: sightGroup),
+                                      category: sightGroup),
                                 ),
                               );
                               break;
@@ -270,26 +135,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                       )
                     ]
                   : []),
-          SizedBox(
-            height: 350,
-            child: GoogleMap(
-              mapType: MapType.normal,
-              minMaxZoomPreference: googleServiceProvider.zoomPref,
-              onMapCreated: googleServiceProvider.onMapCreated,
-              initialCameraPosition: googleServiceProvider.currentCityPosition,
-              zoomGesturesEnabled: false,
-              zoomControlsEnabled: false,
-              tiltGesturesEnabled: false,
-              scrollGesturesEnabled: false,
-              compassEnabled: false,
-              myLocationEnabled: false,
-              myLocationButtonEnabled: false,
-              markers: googleServiceProvider.markers.values.toSet(),
-              onTap: (latLng) {
-                openMapDialog(context);
-              },
-            ),
-          ),
+          mapWidget,
           const SizedBox(height: 10.0),
         ],
       ),

@@ -86,7 +86,7 @@ class _SightsMainScreenState extends State<SightsMainScreen>
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          SightsCategoryScreen(categoryId: sg),
+                          SightsCategoryScreen(category: sg),
                     ),
                   );
                 },

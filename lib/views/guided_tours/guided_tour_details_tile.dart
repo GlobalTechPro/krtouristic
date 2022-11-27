@@ -1,18 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:krtouristic/conf/responsive_app_config.dart';
 import 'package:krtouristic/model/core/guided_tour.dart';
-import 'package:krtouristic/model/core/location.dart';
 import 'package:krtouristic/model/core/schedule.dart';
-import 'package:krtouristic/providers/google_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:krtouristic/conf/font_styles.dart' as font_styles;
 import 'package:galleryimage/galleryimage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:krtouristic/views/common/map/map_helper.dart';
+import 'package:krtouristic/views/common/map/map_widget.dart';
 import 'package:krtouristic/views/common/youtube_player_widget.dart';
 import 'package:readmore/readmore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:krtouristic/conf/globals.dart' as globals;
 
 const double paddingPercentage = 1;
 
@@ -26,93 +24,39 @@ class GuidedTourDetailsTile extends StatefulWidget {
 
 class _GuidedTourDetailsTileState extends State<GuidedTourDetailsTile> {
   Map<PolylineId, Polyline> polylines = {};
-  Map<MarkerId, Marker> mapMarkers = {};
-  MapType dialogMapType = MapType.normal;
-  String mapTypeValue = 'normal';
+  Map<MarkerId, Marker> markers = {};
+  Widget mapWidget = Container();
 
-  Polyline createPolyLine(List<LatLng> polylineCoordinates) {
-    PolylineId id = PolylineId(polylineCoordinates.toString());
-    return Polyline(
-      polylineId: id,
-      geodesic: true,
-      color: Colors.blue,
-      points: polylineCoordinates,
-      width: 4,
+  Future<void> processData(context) async {
+    markers = await MapHelper.createTourMarkers(
+        [
+          widget.tour.locations[0],
+          widget.tour.locations[widget.tour.locations.length - 1]
+        ]
     );
-  }
 
-  Future<void> buildPolylines(
-      {required LatLng origin, required LatLng destination}) async {
-    PolylinePoints polylinePoints = PolylinePoints();
-    List<LatLng> polylineCoordinates = [];
+    polylines =  await MapHelper.buildTourPolylines(
+      origin:
+      LatLng(widget.tour.locations[0].lat, widget.tour.locations[0].lng),
+      destination: LatLng(
+        widget.tour.locations[widget.tour.locations.length - 1].lat,
+        widget.tour.locations[widget.tour.locations.length - 1].lng));
 
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      globals.googleApiKey,
-      PointLatLng(origin.latitude, origin.longitude),
-      PointLatLng(destination.latitude, destination.longitude),
-      travelMode: TravelMode.walking,
-    );
-    if (result.points.isNotEmpty) {
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
-    } else {
-      // print(result.errorMessage);
-    }
-    final polyline = createPolyLine(polylineCoordinates);
-    polylines[polyline.polylineId] = polyline;
-    setState(() {});
-  }
-
-  void createMarkers(List<Location> locations) async {
-    final BitmapDescriptor startMarkerBitmap =
-        await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(),
-      'assets/icons/start-icon.png',
-    );
-    final BitmapDescriptor finishMarkerBitmap =
-        await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(),
-      'assets/icons/finish-icon.png',
-    );
-    for (final location in locations) {
-      BitmapDescriptor iconBitmap =
-          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
-      if (location == locations[0]) {
-        iconBitmap = startMarkerBitmap;
-      }
-      if (location == locations[locations.length - 1]) {
-        iconBitmap = finishMarkerBitmap;
-      }
-      final markerId =
-          MarkerId('${location.lat.toString()}${location.lng.toString()}');
-      mapMarkers[markerId] = Marker(
-        markerId: markerId,
-        position: LatLng(location.lat, location.lng),
-        infoWindow: InfoWindow(
-          title: location.title,
+    setState(() {
+      mapWidget = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: MapWidget(
+          height: 200,
+          markers: markers,
+          polylines: polylines,
+          cameraPosition: CameraPosition(
+            target: LatLng(widget.tour.locations[0].lat, widget.tour.locations[0].lng),
+            zoom: 13.0,
+          ),
         ),
-        icon: iconBitmap,
       );
-    }
-    setState(() {});
-  }
+    });
 
-  @override
-  void initState() {
-    super.initState();
-
-    createMarkers([
-      widget.tour.locations[0],
-      widget.tour.locations[widget.tour.locations.length - 1]
-    ]);
-
-    buildPolylines(
-        origin:
-            LatLng(widget.tour.locations[0].lat, widget.tour.locations[0].lng),
-        destination: LatLng(
-            widget.tour.locations[widget.tour.locations.length - 1].lat,
-            widget.tour.locations[widget.tour.locations.length - 1].lng));
   }
 
   @override
@@ -120,108 +64,8 @@ class _GuidedTourDetailsTileState extends State<GuidedTourDetailsTile> {
     final responsiveAppConfig = ResponsiveAppConfig(context);
     List<Widget> scheduleRows = [];
     List<Schedule> schedule = widget.tour.schedule ?? [];
-    var googleServiceProvider = GoogleProvider();
-    final CameraPosition initialPosition = CameraPosition(
-      target:
-          LatLng(widget.tour.locations[0].lat, widget.tour.locations[0].lng),
-      zoom: 13.0,
-    );
 
-    Future<void> openMapDialog(BuildContext context) async {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return StatefulBuilder(builder: (context, setState) {
-              return SimpleDialog(
-                backgroundColor: const Color.fromRGBO(2, 51, 103, 1.0),
-                contentPadding: const EdgeInsets.all(3.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                children: [
-                  Stack(children: [
-                    SizedBox(
-                      height: responsiveAppConfig.rHeight(50),
-                      width: responsiveAppConfig.rWidth(80),
-                      child: GoogleMap(
-                        mapType: dialogMapType,
-                        minMaxZoomPreference: googleServiceProvider.zoomPref,
-                        onMapCreated: googleServiceProvider.onMapCreated,
-                        initialCameraPosition: initialPosition,
-                        zoomGesturesEnabled: true,
-                        zoomControlsEnabled: true,
-                        tiltGesturesEnabled: true,
-                        scrollGesturesEnabled: true,
-                        compassEnabled: true,
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: true,
-                        markers: Set<Marker>.of(mapMarkers.values),
-                        polylines: Set<Polyline>.of(polylines.values),
-                      ),
-                    ),
-                    Positioned(
-                      left: 15.0,
-                      top: 5.0,
-                      child: DropdownButton(
-                        style: const TextStyle(
-                          color: Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        dropdownColor: const Color.fromRGBO(2, 51, 103, 1.0),
-                        value: mapTypeValue,
-                        underline: Container(
-                          height: 2,
-                          color: const Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        icon: const Icon(
-                          Icons.map_outlined,
-                          color: Color.fromRGBO(255, 213, 0, 1.0),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: "normal",
-                            child: Text(
-                              "Звичайна",
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: "satellite",
-                            child: Text(
-                              "Супутник",
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: "terrain",
-                            child: Text(
-                              "Ландшафт",
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            switch (value) {
-                              case 'normal':
-                                dialogMapType = MapType.normal;
-                                mapTypeValue = value.toString();
-                                break;
-                              case 'satellite':
-                                dialogMapType = MapType.satellite;
-                                mapTypeValue = value.toString();
-                                break;
-                              case 'terrain':
-                                dialogMapType = MapType.terrain;
-                                mapTypeValue = value.toString();
-                                break;
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                  ]),
-                ],
-              );
-            });
-          });
-    }
+    processData(context);
 
     Widget divider = const Divider(
       height: 30.0,
@@ -582,30 +426,7 @@ class _GuidedTourDetailsTileState extends State<GuidedTourDetailsTile> {
 
             // -----------------------------------------------------------
             // map section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: SizedBox(
-                height: 200,
-                child: GoogleMap(
-                  mapType: MapType.normal,
-                  minMaxZoomPreference: googleServiceProvider.zoomPref,
-                  onMapCreated: googleServiceProvider.onMapCreated,
-                  initialCameraPosition: initialPosition,
-                  zoomGesturesEnabled: false,
-                  zoomControlsEnabled: false,
-                  tiltGesturesEnabled: false,
-                  scrollGesturesEnabled: false,
-                  compassEnabled: false,
-                  myLocationEnabled: false,
-                  myLocationButtonEnabled: false,
-                  markers: Set<Marker>.of(mapMarkers.values),
-                  polylines: Set<Polyline>.of(polylines.values),
-                  onTap: (latLng) {
-                    openMapDialog(context);
-                  },
-                ),
-              ),
-            ),
+            mapWidget,
             // end of map section
             // -----------------------------------------------------------
 
