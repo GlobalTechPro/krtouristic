@@ -12,7 +12,7 @@ class MapHelper {
     final Map<MarkerId, Marker> markers = {};
     final BitmapDescriptor markerBitmap = await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(),
-      'assets/icons/location-icon.png',
+      'assets/icons/sight_map.png',
     );
     for (final Location location in locations) {
       final markerId =
@@ -36,7 +36,7 @@ class MapHelper {
     final Map<MarkerId, Marker> markers = {};
     final BitmapDescriptor markerBitmap = await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(),
-      'assets/icons/location-icon.png',
+      'assets/icons/sight_map.png',
     );
     for (final Location location in locations) {
       final markerId =
@@ -113,25 +113,34 @@ class MapHelper {
 
   static Future<Map<MarkerId, Marker>> createTourMarkers(List<Location> locations) async {
     final Map<MarkerId, Marker> markers = {};
+    BitmapDescriptor iconBitmap;
 
+    BitmapDescriptor regularIconBitmap = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(),
+      'assets/icons/sight_map.png',
+    );
     final BitmapDescriptor startMarkerBitmap =
     await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(),
-      'assets/icons/start-icon.png',
+      'assets/icons/start_icon.png',
     );
     final BitmapDescriptor finishMarkerBitmap =
     await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(),
-      'assets/icons/finish-icon.png',
+      'assets/icons/finish_icon.png',
     );
     for (final location in locations) {
-      BitmapDescriptor iconBitmap =
-      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
       if (location == locations[0]) {
         iconBitmap = startMarkerBitmap;
-      }
-      if (location == locations[locations.length - 1]) {
+      } else if (location == locations[locations.length - 1]) {
         iconBitmap = finishMarkerBitmap;
+      } else {
+        iconBitmap = regularIconBitmap;
+      }
+      if (location != locations[0]
+          && location != locations[locations.length - 1]
+          && location.sightGroup == null) {
+        continue;
       }
       final markerId =
       MarkerId('${location.lat.toString()}${location.lng.toString()}');

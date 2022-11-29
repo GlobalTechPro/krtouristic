@@ -28,12 +28,7 @@ class _GuidedTourDetailsTileState extends State<GuidedTourDetailsTile> {
   Widget mapWidget = Container();
 
   Future<void> processData(context) async {
-    markers = await MapHelper.createTourMarkers(
-        [
-          widget.tour.locations[0],
-          widget.tour.locations[widget.tour.locations.length - 1]
-        ]
-    );
+    markers = await MapHelper.createTourMarkers(widget.tour.locations);
 
     polylines =  await MapHelper.buildTourPolylines(
       origin:
