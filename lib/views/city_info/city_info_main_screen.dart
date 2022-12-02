@@ -414,24 +414,26 @@ class _CityInfoMainScreenState extends State<CityInfoMainScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            subtitle: Container(
-              child: CachedNetworkImage(
-                imageUrl:
-                'https://firebasestorage.googleapis.com/v0/b/ets-com.appspot.com/o/images%2Fcity_pics%2FKryvyi_Rih_10.jpg?alt=media&token=d70d6adc-e6f0-44c4-a8e1-09ed291d818d',
-                imageBuilder: (context, imageProvider) {
-                  return Image(
-                    image: imageProvider,
-                    width: responsiveAppConfig.rWidthPadding(100),
-                  );
-                },
-                progressIndicatorBuilder: (context, url, downloadProgress) =>
-                    CircularProgressIndicator(
-                      value: downloadProgress.progress,
-                      color: const Color.fromRGBO(255, 213, 0, 1.0),
-                      backgroundColor: const Color.fromRGBO(1, 25, 51, 1.0),
-                    ),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
+            subtitle: Column(
+              children: [
+                CachedNetworkImage(
+                  imageUrl:
+                  'https://firebasestorage.googleapis.com/v0/b/ets-com.appspot.com/o/images%2Fcity_pics%2FKryvyi_Rih_10.jpg?alt=media&token=d70d6adc-e6f0-44c4-a8e1-09ed291d818d',
+                  imageBuilder: (context, imageProvider) {
+                    return Image(
+                      image: imageProvider,
+                      width: responsiveAppConfig.rWidthPadding(100),
+                    );
+                  },
+                  progressIndicatorBuilder: (context, url, downloadProgress) =>
+                      CircularProgressIndicator(
+                        value: downloadProgress.progress,
+                        color: const Color.fromRGBO(255, 213, 0, 1.0),
+                        backgroundColor: const Color.fromRGBO(1, 25, 51, 1.0),
+                      ),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
+              ],
             ),
           ),
 
