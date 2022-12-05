@@ -12,6 +12,7 @@ class Guide {
     this.spokenLanguages,
     this.avatar,
     this.youtubeUrl,
+    this.firebaseId,
   });
 
   final dynamic name;
@@ -22,14 +23,17 @@ class Guide {
   final List<dynamic>? spokenLanguages;
   final NetworkImage? avatar;
   final String? youtubeUrl;
+  final String? firebaseId;
 
   factory Guide.fromFirestore(
     dynamic snapshot,
     SnapshotOptions? options,
   ) {
+    String firebId = '';
     final Map<String, dynamic>? data;
     if (snapshot is DocumentSnapshot<Map<String, dynamic>>) {
       data = snapshot.data();
+      firebId = snapshot.id;
     } else {
       data = snapshot;
     }
@@ -42,6 +46,7 @@ class Guide {
       spokenLanguages: data?['spoken_languages'],
       avatar: data?['avatar'] != null ? NetworkImage(data?['avatar']) : null,
       youtubeUrl: data?['youtube_url'],
+      firebaseId: firebId,
     );
   }
 
