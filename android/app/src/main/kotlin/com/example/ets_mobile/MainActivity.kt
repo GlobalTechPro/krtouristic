@@ -1,4 +1,4 @@
-package com.ets.android
+package ua.kr.tourism
 
 import io.flutter.embedding.android.FlutterActivity
 
