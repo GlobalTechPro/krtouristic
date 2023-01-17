@@ -7,6 +7,7 @@ void insertData() async {
 
   final batch = getIt<FirebaseFirestore>().batch();
 
+/*
   final cityKryvyiRihUk = <String, dynamic>{
     "id": 1,
     "lang": "uk",
@@ -274,7 +275,7 @@ void insertData() async {
       "last": "Казаков",
       "patronymic": "Леонідович",
     },
-    "subtitle": "Географ, краєзнавець, екскурсовод",
+    "subtitle": "Найкращий гід України 2021 року - Ukraine Tourism Awards",
     "description":
     "Випускник географічного факультету Криворізького педагогічного інституту 1993 року. За спеціальністю вчитель географії та біології. Навчався в аспірантурі Сімферопольського державного університету. Кандидат географічних наук, доцент. З 2003 року завідуючий кафедрою фізичної географії, краєзнавства та туризму Криворізького національного університету. В екскурсійній справі з 1991 року. Екскурсійну діяльність розпочав в карстових печерах Кримських гір – Мармуровій і Тигровий Хід, по горі Чатирдаг. Дослідник індустріальної спадщини, природи та історії Криворіжжя. Автор понад 150 наукових публікацій. Організатор і керівник курсів екскурсоводів при Криворізькому педагогічному інституті.",
     "phone": "+380672918621",
@@ -1000,7 +1001,7 @@ void insertData() async {
   // batch.set(getIt<FirebaseFirestore>().collection("Location").doc(), location9);
   // batch.set(getIt<FirebaseFirestore>().collection("Location").doc(), location10);
 
-/*
+
     final guidedTour1 = <String, dynamic>{
       "city_id": 1,
       "lang": "uk",
@@ -1086,6 +1087,10 @@ void insertData() async {
         },
       ],
     };
+
+*/
+
+/*
     final guidedTour2 = <String, dynamic>{
       "city_id": 1,
       "lang": "uk",
@@ -1136,6 +1141,7 @@ void insertData() async {
         },
       ],
     };
+
     batch.set(getIt<FirebaseFirestore>().collection("GuidedTour").doc(), guidedTour1);
 */
 
